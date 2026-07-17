@@ -11,7 +11,7 @@ export default defineConfig([
     treeshake: true,
   },
   {
-    entry: ['src/cli.ts'],
+    entry: ['src/bin.ts'],
     format: ['esm'],
     dts: false,
     sourcemap: true,

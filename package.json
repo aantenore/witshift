@@ -25,7 +25,7 @@
   },
   "packageManager": "pnpm@11.13.0",
   "bin": {
-    "witshift": "./dist/cli.js"
+    "witshift": "./dist/bin.js"
   },
   "exports": {
     ".": {
@@ -43,10 +43,13 @@
   "scripts": {
     "build": "tsup",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "component:smoke": "pnpm build && node ./scripts/component-smoke.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
+    "package:check": "pnpm build && publint --strict && attw --pack . --profile esm-only && node ./scripts/package-smoke.mjs",
     "package:smoke": "node ./scripts/package-smoke.mjs",
+    "release:check": "pnpm check && pnpm audit --prod && pnpm package:check && pnpm component:smoke",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
@@ -58,11 +61,22 @@
     "yaml": "2.9.0",
     "zod": "4.4.3"
   },
-  "optionalDependencies": {
+  "peerDependencies": {
     "@bytecodealliance/componentize-js": "0.21.0",
     "@bytecodealliance/jco": "1.25.2"
   },
+  "peerDependenciesMeta": {
+    "@bytecodealliance/componentize-js": {
+      "optional": true
+    },
+    "@bytecodealliance/jco": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@bytecodealliance/componentize-js": "0.21.0",
+    "@bytecodealliance/jco": "1.25.2",
     "@eslint/js": "10.0.1",
     "@types/node": "26.1.1",
     "@vitest/coverage-v8": "4.1.10",

@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { Command, CommanderError } from 'commander';
 import packageJson from '../package.json' with { type: 'json' };
 import { buildProject } from './build.js';
@@ -223,10 +222,3 @@ function jsonRequested(argv: readonly string[]): boolean {
 function cleanCommanderMessage(message: string): string {
   return message.replace(/^error:\s*/u, '').trim();
 }
-
-function isMainModule(): boolean {
-  const entry = process.argv[1];
-  return entry !== undefined && pathToFileURL(resolve(entry)).href === import.meta.url;
-}
-
-if (isMainModule()) process.exitCode = await runCli();
