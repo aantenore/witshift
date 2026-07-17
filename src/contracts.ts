@@ -62,10 +62,15 @@ export const migrationManifestSchema = z.object({
     componentizeJs: z.string().min(1),
     node: z.string().min(1),
   }),
-  tools: z.array(z.object({ name: z.string(), schemaDigest: z.string() })),
+  tools: z.array(z.object({ name: z.string(), witName: z.string(), schemaDigest: z.string() })),
   artifacts: z.array(artifactDigestSchema),
   reproducibility: z.object({
     manifestDeterministic: z.literal(true),
+    deliveryMode: z.enum(['content-addressed-cache', 'direct']),
+    cacheKey: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/u)
+      .nullable(),
     componentDigestCompared: z.boolean(),
     componentDigestStable: z.boolean().nullable(),
     note: z.string(),
@@ -140,4 +145,12 @@ export interface ComponentToolchainPort {
     timeoutMs: number;
   }): Promise<void>;
   versions(cwd: string): Promise<{ jco: string; componentizeJs: string }>;
+}
+
+export interface BuildResult {
+  readonly manifest: MigrationManifest;
+  readonly outputDirectory: string;
+  readonly manifestPath: string;
+  readonly reportPath: string;
+  readonly componentPath: string;
 }
