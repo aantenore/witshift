@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/aantenore/witshift/schemas/witshift.config.schema.json",
+  "title": "WITShift configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "entry", "build"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "entry": { "$ref": "#/$defs/relativePath" },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "world"],
+      "properties": {
+        "package": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$" },
+        "world": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 600000 }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "network": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "allow": { "type": "array", "items": { "type": "string" } } }
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "read": { "type": "array", "items": { "$ref": "#/$defs/relativePath" } },
+            "write": { "type": "array", "items": { "$ref": "#/$defs/relativePath" } }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["originalAdapter", "componentAdapter", "evidenceLevel"],
+      "properties": {
+        "originalAdapter": { "$ref": "#/$defs/relativePath" },
+        "componentAdapter": { "$ref": "#/$defs/relativePath" },
+        "evidenceLevel": {
+          "enum": ["test-only", "component-runtime", "wassette-runtime"]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+    }
+  }
+}

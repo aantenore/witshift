@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.witshift/
+*.tgz
+*.log
+.DS_Store
+samples/**/node_modules/
+samples/**/dist/

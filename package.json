@@ -1,0 +1,76 @@
+{
+  "name": "witshift",
+  "version": "0.1.0-alpha.1",
+  "description": "Fail-closed TypeScript MCP to WebAssembly Component migration and conformance CLI",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Antonio Antenore <ant_ant95@hotmail.it>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aantenore/witshift.git"
+  },
+  "homepage": "https://github.com/aantenore/witshift#readme",
+  "bugs": "https://github.com/aantenore/witshift/issues",
+  "keywords": [
+    "mcp",
+    "webassembly",
+    "component-model",
+    "wit",
+    "wassette",
+    "migration",
+    "conformance"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.13.0",
+  "bin": {
+    "witshift": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "package:smoke": "node ./scripts/package-smoke.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "15.0.0",
+    "ts-morph": "28.0.0",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  },
+  "optionalDependencies": {
+    "@bytecodealliance/componentize-js": "0.21.0",
+    "@bytecodealliance/jco": "1.25.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.1.1",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "10.7.0",
+    "prettier": "3.9.5",
+    "publint": "0.3.21",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.64.0",
+    "vitest": "4.1.10"
+  }
+}
