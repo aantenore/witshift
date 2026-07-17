@@ -20,6 +20,7 @@ The manifest uses different terms:
 
 - `componentDigestStable`: result of an independent byte comparison;
 - `deliveryMode: content-addressed-cache`: stable reuse of an admitted artifact;
+- `canonicalSerialization`: deterministic ordering and serialization, not deterministic values;
 - manifest note: explicitly states that cached repeat delivery is not a clean-room reproducibility
   claim.
 

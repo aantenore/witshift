@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { basename, isAbsolute, posix, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
@@ -127,13 +127,13 @@ async function verifyCase(
   config: WitshiftConfig,
   timeoutMs: number,
 ): Promise<VerificationCaseResult> {
-  if (fixture.expectPolicyDeny) {
-    return verifyPolicyCase(fixture, componentPort, config, timeoutMs);
-  }
   const tool = tools.get(fixture.tool);
   const validator = validators.get(fixture.tool);
   if (!tool || !validator) {
     return resultBase(fixture, 'error', false, false, `Unknown tool ${fixture.tool}`);
+  }
+  if (fixture.expectPolicyDeny) {
+    return verifyPolicyCase(fixture, componentPort, config, timeoutMs);
   }
   if (!validator.input(fixture.input)) {
     return resultBase(
@@ -330,10 +330,24 @@ async function loadExecutionPort(
   relativePath: string,
   role: 'original' | 'component',
 ): Promise<ExecutionPort> {
-  const modulePath = resolve(loaded.projectRoot, relativePath);
-  const prefix = loaded.projectRoot.endsWith(sep)
-    ? loaded.projectRoot
-    : `${loaded.projectRoot}${sep}`;
+  const unresolvedModulePath = resolve(loaded.projectRoot, relativePath);
+  let modulePath: string;
+  let realRoot: string;
+  try {
+    [modulePath, realRoot] = await Promise.all([
+      realpath(unresolvedModulePath),
+      realpath(loaded.projectRoot),
+    ]);
+  } catch (error) {
+    throw new WitshiftError(
+      'ADAPTER_LOAD_FAILED',
+      `Cannot resolve ${role} adapter ${relativePath}`,
+      ExitCode.invalidConfiguration,
+      { role, path: relativePath },
+      { cause: error },
+    );
+  }
+  const prefix = realRoot.endsWith(sep) ? realRoot : `${realRoot}${sep}`;
   if (!modulePath.startsWith(prefix)) {
     throw new WitshiftError(
       'ADAPTER_OUTSIDE_PROJECT',

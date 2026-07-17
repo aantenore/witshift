@@ -97,10 +97,11 @@ inspection to demonstrate that arbitrary Node.js filesystem calls are not disgui
 
 ## Reproducibility
 
-The manifest is canonical and stable. Independent ComponentizeJS runs can currently produce
-different component bytes for identical inputs. With caching enabled, WITShift admits one component
-under a hash-bound cache key and verifies it on reuse. That creates stable repeat delivery, not a
-clean-room reproducibility claim. `--no-cache` exposes direct upstream behavior.
+The manifest serialization is canonical; its values describe the artifact actually delivered.
+Independent ComponentizeJS runs can currently produce different component bytes for identical
+inputs. With caching enabled, WITShift admits one component under a hash-bound cache key and verifies
+it on reuse. That creates stable repeat delivery, not a clean-room reproducibility claim. `--no-cache`
+exposes direct upstream behavior.
 
 ## Documentation
 

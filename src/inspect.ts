@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { basename, relative, resolve, sep } from 'node:path';
 import {
   Node,
@@ -35,8 +35,10 @@ export async function inspectProject(projectPath: string): Promise<InspectReport
   const entryPath = resolveInsideProject(loaded, loaded.config.entry);
   let sourceText: string;
   try {
+    await assertRealPathInsideProject(loaded, entryPath);
     sourceText = await readFile(entryPath, 'utf8');
   } catch (error) {
+    if (error instanceof WitshiftError) throw error;
     throw new WitshiftError(
       'ENTRY_NOT_READABLE',
       `Cannot read configured entry ${loaded.config.entry}`,
@@ -337,28 +339,53 @@ function parseSchema(expression: Expression): SchemaResult {
   }
   const argumentsList = expression.getArguments();
   if (method === 'object') {
+    assertZodNamespace(callee.getExpression());
     const shape = argumentsList[0];
     if (!shape || !Node.isObjectLiteralExpression(shape))
       throw new Error('z.object requires an inline shape');
     return parseZodShape(shape);
   }
-  if (method === 'string') return { schema: { type: 'string' }, optional: false };
-  if (method === 'number') return { schema: { type: 'number' }, optional: false };
-  if (method === 'int') return { schema: { type: 'integer' }, optional: false };
-  if (method === 'boolean') return { schema: { type: 'boolean' }, optional: false };
-  if (method === 'unknown') return { schema: {}, optional: false };
+  if (method === 'string') {
+    assertZodNamespace(callee.getExpression());
+    return { schema: { type: 'string' }, optional: false };
+  }
+  if (method === 'number') {
+    assertZodNamespace(callee.getExpression());
+    return { schema: { type: 'number' }, optional: false };
+  }
+  if (method === 'int') {
+    const receiver = callee.getExpression();
+    if (Node.isCallExpression(receiver)) {
+      const base = parseSchema(receiver).schema;
+      if (base['type'] !== 'number') throw new Error('z.int must refine z.number');
+    } else {
+      assertZodNamespace(receiver);
+    }
+    return { schema: { type: 'integer' }, optional: false };
+  }
+  if (method === 'boolean') {
+    assertZodNamespace(callee.getExpression());
+    return { schema: { type: 'boolean' }, optional: false };
+  }
+  if (method === 'unknown') {
+    assertZodNamespace(callee.getExpression());
+    return { schema: {}, optional: false };
+  }
   if (method === 'literal') {
+    assertZodNamespace(callee.getExpression());
     const value = argumentsList[0];
     if (!value) throw new Error('z.literal requires a value');
     return { schema: { const: parseLiteral(value) }, optional: false };
   }
   if (method === 'enum') {
+    assertZodNamespace(callee.getExpression());
     const values = argumentsList[0];
     if (!values || !Node.isArrayLiteralExpression(values))
       throw new Error('z.enum requires a literal array');
     return { schema: { type: 'string', enum: parseLiteral(values) }, optional: false };
   }
   if (method === 'array') {
+    assertZodNamespace(callee.getExpression());
     const item = argumentsList[0];
     if (!item) throw new Error('z.array requires an item schema');
     return {
@@ -367,6 +394,12 @@ function parseSchema(expression: Expression): SchemaResult {
     };
   }
   throw new Error(`Unsupported Zod schema method ${method}`);
+}
+
+function assertZodNamespace(expression: Expression): void {
+  if (!Node.isIdentifier(expression) || expression.getText() !== 'z') {
+    throw new Error('Schema calls must use the z namespace');
+  }
 }
 
 function parseZodShape(shape: ObjectLiteralExpression): SchemaResult {
@@ -425,6 +458,29 @@ function validateHandler(handler: Handler): { code: string; message: string } | 
       message: 'Handler must accept exactly one input parameter',
     };
   }
+  if (
+    handler.getReturnTypeNode() ||
+    handler.getParameters().some((parameter) => parameter.getTypeNode() !== undefined)
+  ) {
+    return {
+      code: 'UNSUPPORTED_TYPESCRIPT_HANDLER_SYNTAX',
+      message: 'Handler type annotations must be erased before componentization',
+    };
+  }
+  const body = handler.getBody();
+  if (Node.isBlock(body)) {
+    const statements = body.getStatements();
+    if (
+      statements.length !== 1 ||
+      !Node.isReturnStatement(statements[0]) ||
+      !statements[0].getExpression()
+    ) {
+      return {
+        code: 'UNSUPPORTED_HANDLER_BODY',
+        message: 'Block handlers may contain only one value-return statement',
+      };
+    }
+  }
   for (const node of handler.getDescendants()) {
     if (Node.isAwaitExpression(node) || Node.isYieldExpression(node)) {
       return {
@@ -436,6 +492,56 @@ function validateHandler(handler: Handler): { code: string; message: string } | 
       return {
         code: 'UNSUPPORTED_HANDLER_CALL',
         message: 'Handler calls and constructors require an explicit future capability adapter',
+      };
+    }
+    if (Node.isBinaryExpression(node)) {
+      const operator = node.getOperatorToken().getKind();
+      if (operator >= SyntaxKind.FirstAssignment && operator <= SyntaxKind.LastAssignment) {
+        return {
+          code: 'UNSUPPORTED_HANDLER_MUTATION',
+          message: 'Assignments are outside the pure handler subset',
+        };
+      }
+    }
+    if (
+      Node.isPostfixUnaryExpression(node) ||
+      (Node.isPrefixUnaryExpression(node) &&
+        (node.getOperatorToken() === SyntaxKind.PlusPlusToken ||
+          node.getOperatorToken() === SyntaxKind.MinusMinusToken)) ||
+      Node.isDeleteExpression(node)
+    ) {
+      return {
+        code: 'UNSUPPORTED_HANDLER_MUTATION',
+        message: 'Mutation operators are outside the pure handler subset',
+      };
+    }
+    if (
+      Node.isAsExpression(node) ||
+      Node.isTypeAssertion(node) ||
+      Node.isNonNullExpression(node) ||
+      Node.isSatisfiesExpression(node)
+    ) {
+      return {
+        code: 'UNSUPPORTED_TYPESCRIPT_HANDLER_SYNTAX',
+        message: 'TypeScript-only expressions must be erased before componentization',
+      };
+    }
+    if (
+      Node.isSpreadAssignment(node) ||
+      Node.isSpreadElement(node) ||
+      Node.isMethodDeclaration(node) ||
+      Node.isGetAccessorDeclaration(node) ||
+      Node.isSetAccessorDeclaration(node)
+    ) {
+      return {
+        code: 'UNSUPPORTED_HANDLER_STRUCTURE',
+        message: 'Spreads, methods, and accessors are outside the pure handler subset',
+      };
+    }
+    if (node.getKind() === SyntaxKind.ThisKeyword || node.getKind() === SyntaxKind.SuperKeyword) {
+      return {
+        code: 'UNSUPPORTED_HANDLER_CONTEXT',
+        message: 'this and super are outside the context-free handler subset',
       };
     }
     if ((Node.isArrowFunction(node) || Node.isFunctionExpression(node)) && node !== handler) {
@@ -531,6 +637,18 @@ function resolveInsideProject(loaded: LoadedConfig, path: string): string {
     );
   }
   return resolved;
+}
+
+async function assertRealPathInsideProject(loaded: LoadedConfig, path: string): Promise<void> {
+  const [realRoot, realEntry] = await Promise.all([realpath(loaded.projectRoot), realpath(path)]);
+  const prefix = realRoot.endsWith(sep) ? realRoot : `${realRoot}${sep}`;
+  if (realEntry !== realRoot && !realEntry.startsWith(prefix)) {
+    throw new WitshiftError(
+      'PATH_OUTSIDE_PROJECT',
+      `${loaded.config.entry} resolves through a link outside the project`,
+      ExitCode.invalidConfiguration,
+    );
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

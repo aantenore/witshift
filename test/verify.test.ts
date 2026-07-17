@@ -179,4 +179,24 @@ describe('verifyProject', () => {
     expect(result.report.passed).toBe(false);
     expect(result.report.summary.mismatched).toBe(1);
   });
+
+  it('does not accept policy evidence for an unknown tool', async () => {
+    const root = await verificationProject();
+    const fixtures = join(root, 'fixtures.jsonl');
+    await writeFile(
+      fixtures,
+      JSON.stringify({
+        id: 'unknown-tool',
+        tool: 'missing',
+        input: {},
+        expectPolicyDeny: { capability: 'network', target: 'blocked.example' },
+      }),
+    );
+
+    const result = await verifyProject(root, fixtures);
+
+    expect(result.report.passed).toBe(false);
+    expect(result.report.summary).toMatchObject({ denied: 0, errors: 1 });
+    expect(result.report.cases[0]?.message).toContain('Unknown tool');
+  });
 });

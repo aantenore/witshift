@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -7,7 +7,6 @@ import { inspectProject } from '../src/inspect.js';
 const roots: string[] = [];
 
 afterEach(async () => {
-  const { rm } = await import('node:fs/promises');
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
@@ -101,4 +100,77 @@ describe('inspectProject', () => {
     expect(report.supported).toBe(false);
     expect(report.unsupported.map((item) => item.code)).toContain('AMBIGUOUS_SCHEMA');
   });
+
+  it('requires schema calls to originate from the explicit Zod namespace', async () => {
+    const root = await projectWith(`
+      const schemaFactory = { string: () => ({}) };
+      server.registerTool('bad', {
+        description: 'bad',
+        inputSchema: { value: schemaFactory.string() }
+      }, ({ value }) => ({ structuredContent: { value } }));
+    `);
+
+    const report = await inspectProject(root);
+
+    expect(report.supported).toBe(false);
+    expect(report.unsupported.map((item) => item.code)).toContain('AMBIGUOUS_SCHEMA');
+  });
+
+  it.each([
+    [
+      'mutation',
+      `({ value }) => ({ structuredContent: { value: (value = 'changed') } })`,
+      'UNSUPPORTED_HANDLER_MUTATION',
+    ],
+    [
+      'TypeScript annotation',
+      `({ value }: { value: string }) => ({ structuredContent: { value } })`,
+      'UNSUPPORTED_TYPESCRIPT_HANDLER_SYNTAX',
+    ],
+  ])('rejects handler %s before generation', async (_label, handler, expectedCode) => {
+    const root = await projectWith(`
+      import { z } from 'zod';
+      server.registerTool('unsafe', {
+        description: 'unsafe',
+        inputSchema: z.object({ value: z.string() })
+      }, ${handler});
+    `);
+
+    const report = await inspectProject(root);
+
+    expect(report.supported).toBe(false);
+    expect(report.unsupported.map((item) => item.code)).toContain(expectedCode);
+  });
+
+  it('accepts a function expression with a single pure return', async () => {
+    const root = await projectWith(`
+      import { z } from 'zod';
+      server.registerTool('echo', {
+        description: 'echo',
+        inputSchema: z.object({ value: z.string() })
+      }, function ({ value }) { return { structuredContent: { value } }; });
+    `);
+
+    const report = await inspectProject(root);
+
+    expect(report.supported).toBe(true);
+  });
+
+  it.skipIf(process.platform === 'win32')(
+    'rejects an entry symlink that escapes the project root',
+    async () => {
+      const root = await projectWith('placeholder');
+      const outside = await mkdtemp(join(tmpdir(), 'witshift-outside-'));
+      roots.push(outside);
+      const outsideEntry = join(outside, 'server.ts');
+      await writeFile(outsideEntry, 'secret source');
+      await rm(join(root, 'server.ts'));
+      await symlink(outsideEntry, join(root, 'server.ts'));
+
+      await expect(inspectProject(root)).rejects.toMatchObject({
+        code: 'PATH_OUTSIDE_PROJECT',
+        exitCode: 3,
+      });
+    },
+  );
 });

@@ -65,7 +65,7 @@ export const migrationManifestSchema = z.object({
   tools: z.array(z.object({ name: z.string(), witName: z.string(), schemaDigest: z.string() })),
   artifacts: z.array(artifactDigestSchema),
   reproducibility: z.object({
-    manifestDeterministic: z.literal(true),
+    canonicalSerialization: z.literal(true),
     deliveryMode: z.enum(['content-addressed-cache', 'direct']),
     cacheKey: z
       .string()

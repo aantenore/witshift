@@ -140,6 +140,6 @@ upstream nondeterminism.
 pnpm release:check
 ```
 
-This runs formatting, linting, strict types, 22+ tests, bundling, production audit, publint, packed
-type analysis, isolated consumer installation, and a real component runtime smoke. A tag additionally
-requires green CI and a documented Wassette gate status.
+This runs formatting, linting, strict types, the full unit/integration suite, bundling, production
+audit, publint, packed type analysis, isolated consumer installation, and a real component runtime
+smoke. A tag additionally requires green CI and a documented Wassette gate status.

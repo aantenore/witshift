@@ -164,7 +164,7 @@ export async function buildProject(
     })),
     artifacts: artifacts.sort((left, right) => left.path.localeCompare(right.path)),
     reproducibility: {
-      manifestDeterministic: true,
+      canonicalSerialization: true,
       deliveryMode: cacheEnabled ? 'content-addressed-cache' : 'direct',
       cacheKey,
       componentDigestCompared: observation.componentDigestCompared,
