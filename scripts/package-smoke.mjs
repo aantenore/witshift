@@ -1,23 +1,31 @@
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, resolve } from 'node:path';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const temporaryRoot = await mkdtemp(resolve(tmpdir(), 'witshift-package-smoke-'));
-const packageManager = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const packageManagerEntry = process.env.npm_execpath;
+if (!packageManagerEntry) {
+  throw new Error('Run package smoke through the pinned pnpm script');
+}
 
 try {
   const packDirectory = resolve(temporaryRoot, 'pack');
   await mkdir(packDirectory);
-  await run(packageManager, ['pack', '--pack-destination', packDirectory], repositoryRoot);
+  await runPackageManager(['pack', '--pack-destination', packDirectory], repositoryRoot);
   const archives = (await readdir(packDirectory)).filter((file) => file.endsWith('.tgz'));
   if (archives.length !== 1)
     throw new Error(`Expected one package archive, found ${archives.length}`);
   const archive = resolve(packDirectory, archives[0]);
-  await run(npm, ['init', '--yes'], temporaryRoot);
-  await run(npm, ['install', archive, '--omit=optional', '--no-audit', '--no-fund'], temporaryRoot);
+  await writeFile(
+    resolve(temporaryRoot, 'package.json'),
+    `${JSON.stringify({ name: 'witshift-smoke-consumer', private: true, type: 'module' })}\n`,
+  );
+  await runPackageManager(
+    ['add', archive, '--ignore-scripts', '--config.audit=false'],
+    temporaryRoot,
+  );
   const installed = resolve(temporaryRoot, 'node_modules', 'witshift');
   const metadata = JSON.parse(await readFile(resolve(installed, 'package.json'), 'utf8'));
   if (metadata.version !== '0.1.0-alpha.1') throw new Error('Packed version is unexpected');
@@ -28,6 +36,9 @@ try {
     if ((await exists(resolve(installed, excluded))) === true) {
       throw new Error(`Package unexpectedly contains ${excluded}`);
     }
+  }
+  if ((await exists(resolve(temporaryRoot, 'node_modules', '@bytecodealliance'))) === true) {
+    throw new Error('Optional toolchain peers were installed implicitly');
   }
   const cli = resolve(installed, 'dist', 'bin.js');
   const version = await run(process.execPath, [cli, '--version'], temporaryRoot);
@@ -51,6 +62,10 @@ try {
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
+}
+
+function runPackageManager(argumentsList, cwd) {
+  return run(process.execPath, [packageManagerEntry, ...argumentsList], cwd);
 }
 
 async function readdirOrRead(path) {

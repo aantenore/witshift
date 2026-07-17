@@ -18,8 +18,16 @@ try {
     reproducibilityCheck: false,
   });
   await run(
-    process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
-    ['exec', 'jco', 'transpile', result.componentPath, '--out-dir', transpiled],
+    process.execPath,
+    [
+      packageManagerEntry(),
+      'exec',
+      'jco',
+      'transpile',
+      result.componentPath,
+      '--out-dir',
+      transpiled,
+    ],
     repositoryRoot,
   );
   const namespace = await import(pathToFileURL(resolve(transpiled, 'component.js')).href);
@@ -50,6 +58,12 @@ try {
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
+}
+
+function packageManagerEntry() {
+  const entry = process.env.npm_execpath;
+  if (!entry) throw new Error('Run component smoke through the pinned pnpm script');
+  return entry;
 }
 
 function run(command, argumentsList, cwd) {
