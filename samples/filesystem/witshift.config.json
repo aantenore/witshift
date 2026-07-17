@@ -1,0 +1,14 @@
+{
+  "$schema": "../../schemas/witshift.config.schema.json",
+  "version": 1,
+  "entry": "src/server.ts",
+  "build": {
+    "package": "witshift:filesystem-boundary",
+    "world": "mcp-tools",
+    "timeoutMs": 180000
+  },
+  "policy": {
+    "network": { "allow": [] },
+    "storage": { "read": [], "write": [] }
+  }
+}

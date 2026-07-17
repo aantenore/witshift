@@ -1,0 +1,3 @@
+{"id":"forecast-turin","tool":"get_forecast","input":{"city":"Turin"},"expect":{"content":[{"type":"text","text":"Sunny in Turin"}],"structuredContent":{"forecast":"Sunny in Turin"}}}
+{"id":"deny-network","tool":"get_forecast","input":{},"expectPolicyDeny":{"capability":"network","target":"api.weather.example"}}
+{"id":"deny-storage","tool":"get_forecast","input":{},"expectPolicyDeny":{"capability":"filesystem-write","target":"../outside"}}
