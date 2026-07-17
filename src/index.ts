@@ -6,3 +6,4 @@ export * from './hash.js';
 export * from './inspect.js';
 export * from './reporting.js';
 export * from './toolchain/jco.js';
+export * from './verify.js';

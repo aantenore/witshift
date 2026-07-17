@@ -47,7 +47,8 @@
         "componentAdapter": { "$ref": "#/$defs/relativePath" },
         "evidenceLevel": {
           "enum": ["test-only", "component-runtime", "wassette-runtime"]
-        }
+        },
+        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 300000 }
       }
     }
   },

@@ -35,6 +35,7 @@ export const witshiftConfigSchema = z.object({
       originalAdapter: relativePathSchema,
       componentAdapter: relativePathSchema,
       evidenceLevel: z.enum(['test-only', 'component-runtime', 'wassette-runtime']),
+      timeoutMs: z.number().int().min(100).max(300_000).default(30_000),
     })
     .optional(),
 });

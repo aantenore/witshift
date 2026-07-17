@@ -106,6 +106,8 @@ export const verificationCaseResultSchema = z.object({
       capability: capabilityKindSchema,
       target: z.string(),
       reason: z.string(),
+      source: z.string(),
+      runtimeEnforced: z.boolean(),
     })
     .optional(),
   message: z.string().optional(),
@@ -132,7 +134,30 @@ export type VerifyReport = z.infer<typeof verifyReportSchema>;
 export interface ExecutionPort {
   readonly id: string;
   readonly evidenceLevel: 'test-only' | 'component-runtime' | 'wassette-runtime';
-  invoke(tool: string, input: unknown): Promise<unknown>;
+  invoke(tool: string, input: unknown, options?: { signal: AbortSignal }): Promise<unknown>;
+  probePolicy?(
+    request: PolicyProbeRequest,
+    options?: { signal: AbortSignal },
+  ): Promise<PolicyDenyEvidence | undefined>;
+}
+
+export interface PolicyProbeRequest {
+  readonly capability: CapabilityKind;
+  readonly target: string;
+}
+
+export interface PolicyDenyEvidence extends PolicyProbeRequest {
+  readonly decision: 'deny';
+  readonly reason: string;
+  readonly source: string;
+  readonly runtimeEnforced: boolean;
+}
+
+export interface VerifyResult {
+  readonly report: VerifyReport;
+  readonly reportDirectory: string;
+  readonly jsonPath: string;
+  readonly markdownPath: string;
 }
 
 export interface ComponentToolchainPort {
