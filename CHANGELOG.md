@@ -3,6 +3,14 @@
 All notable changes are documented here. WITShift follows semantic versioning while alpha APIs may
 change with explicit release notes.
 
+## Unreleased
+
+### Changed
+
+- emit each migrated tool as a direct WIT world export so capability runtimes can discover and
+  invoke it without a product-specific nested-interface bridge;
+- add an opt-in, version-pinned Wassette MCP load/discovery/invocation smoke with artifact hashes.
+
 ## 0.1.0-alpha.1 - 2026-07-17
 
 ### Added

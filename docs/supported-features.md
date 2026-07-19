@@ -33,16 +33,16 @@ for a generic filesystem module. It is not a data-flow proof.
 
 ## Artifact and verification matrix
 
-| Artifact or gate                  | Current status | Evidence                                                     |
-| --------------------------------- | -------------- | ------------------------------------------------------------ |
-| WIT world                         | implemented    | Generated per tool with deterministic name normalization     |
-| WebAssembly Component             | implemented    | Header validated; real component runtime smoke in CI         |
-| Least-privilege candidate policy  | implemented    | Deny by default; explicit network/storage allow lists        |
-| Input/config/lock/artifact hashes | implemented    | Canonical migration manifest                                 |
-| Independent byte comparison       | implemented    | Result can be stable or unstable; never coerced              |
-| Stable repeat delivery            | implemented    | Integrity-checked content-addressed cache                    |
-| Differential adapters             | implemented    | Bounded JSONL cases, schema validation, canonical comparison |
-| Generated-policy denial evaluator | implemented    | Always labelled `runtimeEnforced: false`                     |
-| jco component execution           | implemented    | `pnpm component:smoke`                                       |
-| Wassette component load/invoke    | not verified   | Promotion gate in `docs/wassette-gate.md`                    |
-| Wassette runtime policy denial    | not verified   | `wassette-runtime` label withheld                            |
+| Artifact or gate                  | Current status  | Evidence                                                     |
+| --------------------------------- | --------------- | ------------------------------------------------------------ |
+| WIT world                         | implemented     | Direct exports with deterministic tool-name normalization    |
+| WebAssembly Component             | implemented     | Header validated; real component runtime smoke in CI         |
+| Least-privilege candidate policy  | implemented     | Deny by default; explicit network/storage allow lists        |
+| Input/config/lock/artifact hashes | implemented     | Canonical migration manifest                                 |
+| Independent byte comparison       | implemented     | Result can be stable or unstable; never coerced              |
+| Stable repeat delivery            | implemented     | Integrity-checked content-addressed cache                    |
+| Differential adapters             | implemented     | Bounded JSONL cases, schema validation, canonical comparison |
+| Generated-policy denial evaluator | implemented     | Always labelled `runtimeEnforced: false`                     |
+| jco component execution           | implemented     | `pnpm component:smoke`                                       |
+| Wassette component load/invoke    | verified opt-in | `WASSETTE_BIN=... pnpm test:wassette`                        |
+| Wassette runtime policy denial    | not verified    | `wassette-runtime` label withheld                            |
