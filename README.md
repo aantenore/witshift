@@ -2,6 +2,40 @@
 
 [![CI](https://github.com/aantenore/witshift/actions/workflows/ci.yml/badge.svg)](https://github.com/aantenore/witshift/actions/workflows/ci.yml)
 
+## What this changes in the real world
+
+Many MCP tools are ordinary Node.js programs with access to far more of a computer than they need.
+Moving one into a smaller WebAssembly boundary can reduce that exposure, but understanding its
+contract, rebuilding it, and proving that it still behaves the same is difficult. **WITShift turns a
+narrow, static TypeScript MCP tool into a reviewable WebAssembly Component candidate and produces
+evidence for the migration decision.**
+
+### A concrete example
+
+The bundled weather tool accepts a city and returns a typed, deterministic forecast without needing
+network or filesystem access. WITShift inventories that contract, generates the component and a
+candidate policy with neither capability, then runs the same fixtures through the original and
+component paths. A reviewer sees both matching output for `Turin` and explicit network/filesystem
+denial checks before deciding whether to adopt the component.
+
+WITShift is for MCP tool authors and platform teams exploring smaller, least-privilege execution
+boundaries without manually reverse-engineering every tool.
+
+| Feature                                | Practical benefit                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Static contract inspection             | Teams see inputs, outputs, imports, and coarse capabilities before attempting a migration. |
+| Fail-closed source subset              | Dynamic or ambiguous code is rejected instead of being converted with hidden assumptions.  |
+| Real WebAssembly Component build       | The result is an executable component artifact, not only generated documentation.          |
+| Original-versus-component fixtures     | Reviewers can detect behavior changes on bounded examples before replacing a tool.         |
+| Hashes, manifests, and denial evidence | A migration decision can be traced to the exact source, artifacts, and checks.             |
+
+> **Maturity:** WITShift is an alpha conformance lab for a deliberately small subset of static
+> TypeScript MCP v1 stdio tools. It is not a general TypeScript compiler or a sandbox, and current
+> component-runtime evidence does not prove that Wassette enforced the generated policy. That
+> runtime-denial gate remains open and documented.
+
+## Technical scope
+
 WITShift is a fail-closed migration CLI and conformance lab for a deliberately restricted subset of
 static TypeScript MCP v1 stdio tools. It inventories contracts, emits a real WebAssembly Component
 through the official Bytecode Alliance toolchain, generates a candidate least-privilege policy, and
