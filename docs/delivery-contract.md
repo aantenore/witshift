@@ -3,8 +3,8 @@
 ## Objective
 
 Deliver a fail-closed CLI and conformance lab that migrates a deliberately restricted, statically
-provable subset of TypeScript MCP v1 stdio tool servers into WebAssembly Components suitable for
-later Wassette loading.
+provable subset of TypeScript MCP v1 stdio tool servers into WebAssembly Components loadable by
+capability runtimes such as Wassette.
 
 ## Scope
 
@@ -29,7 +29,7 @@ Out of scope for the alpha:
 Release only when all deterministic inspect/build/verify gates pass, forbidden constructs fail
 closed, package consumption works on Node 24, CI covers Node 24 on three operating systems and
 Node 26 on Linux, dependency audit has no known production vulnerability, and docs explicitly
-mark any unverified Wassette-loading gate.
+mark any unverified Wassette runtime-enforcement gate.
 
 ## Architecture
 
@@ -40,9 +40,9 @@ mark any unverified Wassette-loading gate.
 
 ## Risks and decisions
 
-| Risk                                                          | Handling                                                                           |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Arbitrary JavaScript cannot be proven safe or componentizable | Accept only a documented AST subset and fail closed                                |
-| Toolchain output may vary by version/platform                 | Pin versions, hash inputs and outputs, report repeat-build evidence honestly       |
-| Policy generation may be confused with enforcement            | Treat policy as an artifact; only a runtime denial counts as runtime proof         |
-| Wassette is evolving                                          | Isolate its integration behind an execution port and retain an explicit alpha gate |
+| Risk                                                          | Handling                                                                       |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Arbitrary JavaScript cannot be proven safe or componentizable | Accept only a documented AST subset and fail closed                            |
+| Toolchain output may vary by version/platform                 | Pin versions, hash inputs and outputs, report repeat-build evidence honestly   |
+| Policy generation may be confused with enforcement            | Treat policy as an artifact; only a runtime denial counts as runtime proof     |
+| Wassette is evolving                                          | Pin the opt-in smoke and isolate future denial probes behind an execution port |

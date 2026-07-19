@@ -88,6 +88,12 @@ describe('buildProject', () => {
       expect.objectContaining({ name: 'get_forecast', witName: 'get-forecast' }),
     ]);
     expect(await readFile(first.componentPath)).toEqual(await readFile(second.componentPath));
+    const wit = await readFile(join(first.outputDirectory, 'world.wit'), 'utf8');
+    const source = await readFile(join(first.outputDirectory, 'generated', 'component.js'), 'utf8');
+    expect(wit).toContain('export get-forecast: func(input: string) -> string;');
+    expect(wit).not.toContain('interface tools');
+    expect(source).toContain('export function getForecast(input)');
+    expect(source).not.toContain('export const tools');
     const policy = parseYaml(
       await readFile(join(first.outputDirectory, 'policy.yaml'), 'utf8'),
     ) as Record<string, unknown>;

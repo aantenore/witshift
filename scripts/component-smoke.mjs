@@ -31,11 +31,11 @@ try {
     repositoryRoot,
   );
   const namespace = await import(pathToFileURL(resolve(transpiled, 'component.js')).href);
-  if (!isRecord(namespace['tools']) || typeof namespace['tools']['getForecast'] !== 'function') {
-    throw new Error('Transpiled component does not expose tools.getForecast');
+  if (typeof namespace['getForecast'] !== 'function') {
+    throw new Error('Transpiled component does not expose getForecast');
   }
-  const invoke = namespace['tools']['getForecast'];
-  const encoded = Reflect.apply(invoke, namespace['tools'], [JSON.stringify({ city: 'Turin' })]);
+  const invoke = namespace['getForecast'];
+  const encoded = Reflect.apply(invoke, namespace, [JSON.stringify({ city: 'Turin' })]);
   if (typeof encoded !== 'string') throw new Error('Component result is not a JSON string');
   const decoded = JSON.parse(encoded);
   if (

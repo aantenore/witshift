@@ -52,6 +52,7 @@
     "release:check": "pnpm check && pnpm audit --prod && pnpm package:check && pnpm component:smoke",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:wassette": "pnpm build && node ./scripts/wassette-smoke.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -78,6 +79,7 @@
     "@bytecodealliance/componentize-js": "0.21.0",
     "@bytecodealliance/jco": "1.25.2",
     "@eslint/js": "10.0.1",
+    "@modelcontextprotocol/sdk": "1.29.0",
     "@types/node": "26.1.1",
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "10.7.0",

@@ -54,9 +54,11 @@ Wassette enforced a policy. Ambiguous source stops before component generation.
   schemas, compares canonical JSON, and records denial evidence.
 - The CI runtime gate componentizes and executes the weather sample through jco's WebAssembly
   Component transpilation path.
+- Generated tools use direct WIT world exports, so Wassette 0.4.0 can discover and invoke them over
+  its MCP surface; an opt-in live smoke captures the runtime and artifact hashes.
 - Every artifact is paired with hashes and human-readable evidence.
 
-The remaining Wassette loading and runtime-denial gate is explicit in
+The remaining Wassette runtime-denial promotion gate is explicit in
 [docs/wassette-gate.md](docs/wassette-gate.md).
 
 ## Lifecycle
@@ -69,7 +71,8 @@ flowchart LR
   D --> E["real component.wasm and provenance manifest"]
   E --> F["verify: differential fixtures and policy probes"]
   F --> G["test-only or component-runtime evidence"]
-  G -. open alpha gate .-> H["Wassette runtime evidence"]
+  G --> H["Wassette positive-path evidence"]
+  H -. open denial gate .-> I["Wassette policy-enforcement evidence"]
 ```
 
 ## Quick start from source
@@ -123,8 +126,8 @@ have `ok: false`, a stable code, a message, and an exit code; stack traces are n
   not runtime isolation.
 - `component-runtime`: the emitted component actually executed in a component-capable path. This is
   the current runtime smoke level.
-- `wassette-runtime`: reserved for captured Wassette invocation and denial evidence. The alpha does
-  not emit this label by default.
+- `wassette-runtime`: reserved for captured Wassette invocation and denial evidence. The opt-in
+  positive-path smoke deliberately does not emit this label because runtime denial is still open.
 
 The weather sample is a positive vertical slice. The filesystem sample deliberately fails
 inspection to demonstrate that arbitrary Node.js filesystem calls are not disguised as a migration.

@@ -143,3 +143,17 @@ pnpm release:check
 This runs formatting, linting, strict types, the full unit/integration suite, bundling, production
 audit, publint, packed type analysis, isolated consumer installation, and a real component runtime
 smoke. A tag additionally requires green CI and a documented Wassette gate status.
+
+## Opt-in Wassette compatibility gate
+
+Install or download the evaluated Wassette 0.4.0 binary, verify its release digest, then run:
+
+```bash
+WASSETTE_BIN=/absolute/path/to/wassette pnpm test:wassette
+```
+
+The gate builds the weather component in a temporary directory, loads it into an isolated component
+directory, discovers `get-forecast` through Wassette's stdio MCP surface, invokes it, and records the
+runtime/platform plus component and policy hashes. `WASSETTE_EXPECTED_VERSION` defaults to `0.4.0` so
+runtime drift fails closed. This is positive-path compatibility evidence only; it does not close the
+network/storage denial gate.
